@@ -6,8 +6,14 @@ import (
 )
 
 func main() {
-	defaultWishlist := "wishlist.txt"
-	list, err := wishlist.Open(defaultWishlist)
+	defaultWishlistPath := "wishlist.txt"
+	//defaultDatabasePath := "wishlist.sqlite"
+
+	//if <some argument> {
+	//	wishlistStorage = wishlist.OpenDBStore(defaultDatabasePath)
+	//}
+
+	wishlistStorage, err := wishlist.OpenFileStore(defaultWishlistPath)
 
 	if err != nil {
 		//There is some error, and the error is not that wishlist.txt doesn't exist.
@@ -21,8 +27,9 @@ func main() {
 
 		//There is an error, the error is the file doesn't exist! We're running for the first
 		//time, so initialise the list.
-		list = &wishlist.Wishlist{}
 	}
+
+	list := wishlist.NewWishList(wishlistStorage)
 
 	programArgs := os.Args[1:]
 	// wishlist -- when list is empty, len(os.args) is 1, wishlist store has things
@@ -32,7 +39,6 @@ func main() {
 	if shouldWeList {
 		list.List()
 	} else {
-		list.Add(os.Args[1])
-		list.Save()
+		list.Add(wishlist.Item(os.Args[1]))
 	}
 }

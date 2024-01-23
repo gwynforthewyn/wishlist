@@ -1,35 +1,35 @@
 package wishlist
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 )
 
+type Item string
+
 type Wishlist struct {
-	Items []string
+	Storage WishlistStore
 }
 
-func Open(wishlistPath string) (*Wishlist, error) {
-	f, err := os.Open(wishlistPath)
-	defer f.Close()
+// The interface defines the common properties expected from the storage backend.
+type WishlistStore interface {
+	Items() []Item
+	//Add will add an item to the wishlist's persistent storage and return a bool indicating success or failure.
+	Add(Item)
+}
 
-	if err != nil {
-		return nil, err
-	}
+func NewWishList(ws WishlistStore) Wishlist {
+	w := Wishlist{Storage: ws}
+	return w
+}
 
-	w := &Wishlist{}
-	input := bufio.NewScanner(f)
-
-	for input.Scan() {
-		w.Items = append(w.Items, input.Text())
-	}
-
-	return w, nil
+func (w Wishlist) Items() []Item {
+	//ask the store for the items
+	return w.Storage.Items()
 }
 
 func (w Wishlist) Size() int {
-	return len(w.Items)
+	return len(w.Storage.Items())
 }
 
 func (w Wishlist) List() {
@@ -38,35 +38,15 @@ func (w Wishlist) List() {
 		os.Exit(0)
 	}
 
-	for _, item := range w.Items {
+	for _, item := range w.Storage.Items() {
 		fmt.Println(item)
 	}
 
 	os.Exit(0)
 }
 
-func (w *Wishlist) Add(item string) {
-	w.Items = append(w.Items, item)
+func (w *Wishlist) Add(item Item) {
+	w.Storage.Add(item)
 
 	return
-}
-
-func (w Wishlist) Save() {
-	f, err := os.Create("wishlist.txt")
-
-	if err != nil {
-		fmt.Printf("Failed to open wishlist: %v\n", err)
-		os.Exit(1)
-	}
-
-	defer f.Close()
-
-	for _, item := range w.Items {
-		_, err = fmt.Fprintln(f, item)
-	}
-
-	if err != nil {
-		fmt.Printf("Failed to write to wishlist: %v\n", err)
-		os.Exit(1)
-	}
 }
